@@ -8,16 +8,17 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -26,24 +27,36 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.article1.ui.theme.ComposeTutorialTheme
 
+@ExperimentalMaterialApi
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             ComposeTutorialTheme {
-                conversation(listOf(Message("sam", "how are you"), Message("jack", "I'm good")))
+                Conversation(SampleData.messages)
             }
         }
     }
-
 }
 
-data class Message(
-    val author: String, val body: String
-)
 
+@ExperimentalMaterialApi
 @Composable
-fun MessageCard(msg: Message) {
+fun Conversation(message: List<Message>) {
+
+    var clickedNumber by rememberSaveable { mutableStateOf(-1) }
+
+    LazyColumn {
+        itemsIndexed(message) { index, message ->
+            MessageCard(message, { clickedNumber == index }, { clickedNumber = if (clickedNumber != index) index else -1})
+        }
+    }
+}
+
+
+@ExperimentalMaterialApi
+@Composable
+fun MessageCard(msg: Message, onClick: () -> Boolean, onClick2: () -> Unit) {
     // Add padding around our message
     Row(
         modifier = Modifier
@@ -60,18 +73,17 @@ fun MessageCard(msg: Message) {
 
         Spacer(modifier = Modifier.width(8.dp))
 
-        var isExpanded by remember { mutableStateOf(false) }
-
         val surfaceColor: Color by animateColorAsState(
-            if (isExpanded) MaterialTheme.colors.primary else MaterialTheme.colors.surface
+            if (onClick()) MaterialTheme.colors.primary else MaterialTheme.colors.surface
         )
 
-        Column(modifier = Modifier.clickable { isExpanded = !isExpanded }) {
+        Column {
             Text(
-                text = "Hello ${msg.author}!",
+                text = "${msg.author}!",
                 color = MaterialTheme.colors.secondaryVariant,
                 style = MaterialTheme.typography.subtitle2
             )
+
             Spacer(modifier = Modifier.height(4.dp))
 
             Surface(
@@ -80,16 +92,27 @@ fun MessageCard(msg: Message) {
                 color = surfaceColor,
                 modifier = Modifier
                     .animateContentSize()
-                    .padding(1.dp)
+                    .padding(1.dp),
+                onClick = onClick2
             ) {
                 Text(
                     text = msg.body,
                     modifier = Modifier.padding(all = 4.dp),
-                    maxLines = if (isExpanded) Int.MAX_VALUE else 1,
+                    maxLines = if (onClick()) Int.MAX_VALUE else 1,
                     style = MaterialTheme.typography.body2
                 )
             }
         }
+    }
+}
+
+@ExperimentalMaterialApi
+@Preview(showBackground = true)
+@Composable
+fun PreviewConversation() {
+    ComposeTutorialTheme {
+        Conversation(SampleData.messages)
+
     }
 }
 
@@ -99,29 +122,16 @@ fun MessageCard(msg: Message) {
     showBackground = true,
     name = "Dark Mode"
 )
+
+@ExperimentalMaterialApi
 @Composable
-fun previewMessageCard() {
+fun PreviewMessageCard() {
     ComposeTutorialTheme {
-        MessageCard(Message("hi", "bye"))
+        MessageCard(SampleData.messages[0], {true}, {})
     }
 }
 
-@Composable
-fun conversation(message: List<Message>) {
-    LazyColumn {
-        items(message) { message ->
-            MessageCard(message)
-        }
-    }
-}
 
-@Preview
-@Composable
-fun PreviewConversation() {
-    ComposeTutorialTheme() {
-        conversation(listOf(Message("sam", "how are you"), Message("jack", "I'm good")))
 
-    }
-}
 
 
