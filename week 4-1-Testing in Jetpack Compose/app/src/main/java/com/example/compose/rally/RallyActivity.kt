@@ -49,6 +49,7 @@ fun RallyApp() {
     RallyTheme {
         val allScreens = RallyScreen.values().toList()
         var currentScreen by rememberSaveable { mutableStateOf(RallyScreen.Overview) }
+
         Scaffold(
             topBar = {
                 RallyTopAppBar(
